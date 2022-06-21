@@ -18,6 +18,7 @@ def create_app(config_name):
 
     app.config['SQLALCHEMY_DATABASE_URI'] = config.SQLALCHEMY_DATABASE_URI
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['FLASK_ADMIN_SWATCH'] = 'darkly'
     db = SQLAlchemy(config.APP)
 
     start_views(app, db)

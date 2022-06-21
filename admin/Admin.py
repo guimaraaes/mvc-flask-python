@@ -5,11 +5,13 @@ from model.Product import Product
 from model.Role import Role
 from model.User import User
 
+from admin.Views import UserView
+
 
 def start_views(app, db):
     admin = Admin(app, name='Meu Estoque', template_mode='bootstrap3')
     admin.add_view(ModelView(Role, db.session, "Funções", category="Usuários"))
-    admin.add_view(ModelView(User, db.session,
+    admin.add_view(UserView(User, db.session,
                    "Usuários", category="Usuários"))
     admin.add_view(ModelView(Category, db.session,
                    'Categorias', category="Produtos"))

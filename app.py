@@ -1,7 +1,6 @@
-from crypt import methods
-from email import message
 
 from flask import Flask, redirect, render_template, request
+from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 
 from admin.Admin import start_views
@@ -24,7 +23,7 @@ def create_app(config_name):
     db = SQLAlchemy(config.APP)
 
     start_views(app, db)
-
+    Bootstrap(app)
     db.init_app(app)
 
     @app.route('/')
@@ -33,7 +32,7 @@ def create_app(config_name):
 
     @app.route('/login', methods=['GET'])
     def login():
-        return 'tela login'
+        return render_template('login.html')
 
     @app.route('/login', methods=['POST'])
     def login_post():

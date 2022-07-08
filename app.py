@@ -1,5 +1,5 @@
 
-from flask import Flask, redirect, render_template, request
+from flask import Flask, Response, json, redirect, render_template, request
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 
@@ -26,9 +26,9 @@ def create_app(config_name):
     Bootstrap(app)
     db.init_app(app)
 
-    @app.route('/')
-    def index():
-        return 'Hello World!'
+    # @app.route('/')
+    # def index():
+    #     return 'Hello World!'
 
     @app.route('/login', methods=['GET'])
     def login():
@@ -61,50 +61,73 @@ def create_app(config_name):
             return render_template('recovery.html', data={'status': 401, 'msg': 'Erro ao enviar e-mail de recuperação'})
 
     @app.route('/product', methods=['GET'])
-    def get_all_products():
+    @app.route('/product/<limit>', methods=['GET'])
+    def get_all_products(limit=None):
+        header = {}
+
         product = ProductController()
 
-        result = product.get_all_products()
-        if result:
-            message = result
-        else:
-            message = "Nenhum produto encontrado"
-        return message
+        result = product.get_all_products(limit=limit)
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
+
+    @app.route('/product/<product_id>', methods=['GET'])
+    def get_product_by_id(product_id):
+        header = {}
+
+        product = ProductController()
+
+        result = product.get_product_by_id(product_id=product_id)
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['POST'])
     def save_products():
+        header = {}
         product = ProductController()
 
         result = product.save_product(request.form)
-        if result:
-            message = "Inserido"
-        else:
-            message = "Erro ao inserir"
-
-        return message
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['PUT'])
     def update_product():
+        header = {}
+
         product = ProductController()
 
         result = product.update_product(request.form)
-        if result:
-            message = "Atualizado"
-        else:
-            message = "Erro ao atualizar"
-
-        return message
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['DELETE'])
     def delete_product():
+        header = {}
+
         product = ProductController()
 
         result = product.delete_product(request.form)
-        if result:
-            message = "Excluído"
-        else:
-            message = "Erro ao excluir"
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
 
-        return message
+    @app.route('/user/<user_id>', methods=['GET'])
+    def get_user_by_id(user_id):
+        header = {}
+
+        product = UserController()
+
+        result = product.get_user_by_id(user_id=user_id)
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
+
+    @app.route('/user/email/<user_email>', methods=['GET'])
+    def get_user_by_email(user_email):
+        header = {}
+
+        product = UserController()
+
+        result = product.get_user_by_email(user_email=user_email)
+        return Response(json.dumps(result, ensure_ascii=False),
+                        mimetype='application/json'), result['status'], header
 
     return app

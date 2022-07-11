@@ -1,8 +1,5 @@
 
-from crypt import methods
 from functools import wraps
-from urllib import response
-from weakref import KeyedRef
 
 from flask import (Flask, Response, abort, json, redirect, render_template,
                    request)

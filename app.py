@@ -1,5 +1,11 @@
 
-from flask import Flask, Response, json, redirect, render_template, request
+from crypt import methods
+from functools import wraps
+from urllib import response
+from weakref import KeyedRef
+
+from flask import (Flask, Response, abort, json, redirect, render_template,
+                   request)
 from flask_bootstrap import Bootstrap
 from flask_sqlalchemy import SQLAlchemy
 
@@ -38,6 +44,21 @@ def create_app(config_name):
     # def index():
     #     return 'Hello World!'
 
+    def auth_token_required(f):
+        @wraps(f)
+        def verify_token(*args, **kwargs):
+            user = UserController()
+            try:
+                result = user.verify_auth_token(
+                    request.headers['access_token'])
+                if result['status'] == 200:
+                    return f(*args, **kwargs)
+                else:
+                    abort(result['status'], result['message'])
+            except KeyError as e:
+                abort(401, 'É necessário enviar um token de acesso')
+        return verify_token
+
     @app.route('/login', methods=['GET'])
     def login():
         return render_template('login.html')
@@ -45,14 +66,45 @@ def create_app(config_name):
     @app.route('/login', methods=['POST'])
     def login_post():
         user = UserController()
-        email = request.form['email']
-        password = request.form['password']
+        email = request.form["email"]
+        password = request.form["password"]
         result = user.login(email, password)
 
         if result:
             return redirect('/admin')
         else:
             return render_template('login.html', data={'status': 401, 'msg': 'Dados de usuário incorretos', 'type': None})
+
+    @app.route('/login_api/', methods=['POST'])
+    def login_api():
+        header = {}
+        user = UserController()
+        email = request.form["email"]
+        password = request.form["password"]
+        result = user.login(email, password)
+        code = 401
+        response = {
+            'message': 'Usuário não autorizado',
+            'result': []
+        }
+        if result:
+            if result.active:
+                result = {
+                    'id': result.id,
+                    'username': result.username,
+                    'email': result.email,
+                    'date_created': result.date_created,
+                    'active': result.active
+                }
+                header = {
+                    'access_token': user.generate_auth_token(result),
+                    'token_type': 'JWT'
+                }
+                code = 200
+                response["message"] = "Login realizado com sucesso"
+                response["result"] = result
+        return Response(json.dumps(response, ensure_ascii=False),
+                        mimetype='application/json'), code, header
 
     @app.route('/recovery-password', methods=['GET'])
     def recovery_password():
@@ -70,8 +122,12 @@ def create_app(config_name):
 
     @app.route('/products', methods=['GET'])
     @app.route('/products/<limit>', methods=['GET'])
+    @auth_token_required
     def get_all_products(limit=None):
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = ProductController()
 
@@ -80,8 +136,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/product/<product_id>', methods=['GET'])
+    @auth_token_required
     def get_product_by_id(product_id):
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = ProductController()
 
@@ -90,8 +150,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['POST'])
+    @auth_token_required
     def save_products():
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
         product = ProductController()
 
         result = product.save_product(request.form)
@@ -99,8 +163,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['PUT'])
+    @auth_token_required
     def update_product():
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = ProductController()
 
@@ -109,8 +177,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/product', methods=['DELETE'])
+    @auth_token_required
     def delete_product():
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = ProductController()
 
@@ -119,8 +191,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/user/<user_id>', methods=['GET'])
+    @auth_token_required
     def get_user_by_id(user_id):
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = UserController()
 
@@ -129,8 +205,12 @@ def create_app(config_name):
                         mimetype='application/json'), result['status'], header
 
     @app.route('/user/email/<user_email>', methods=['GET'])
+    @auth_token_required
     def get_user_by_email(user_email):
-        header = {}
+        header = {
+            'access_token': request.headers['access_token'],
+            "token_type": "JWT"
+        }
 
         product = UserController()
 
